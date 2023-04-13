@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "d2c_mp_sales_forecaster"
+version = "0.0.1"
+authors = [
+  { name="Ryan Handerhan", email="rhanderh@alumni.cmu.edu" },
+]
+description = "An application for forecasting direct-to-consumer sales quantities using the NeuralProphet algorithm from Meta."
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/rhanderh/d2c_mp_forecast_tool"
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
+pythonpath = "src"

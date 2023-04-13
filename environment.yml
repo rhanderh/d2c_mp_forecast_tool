@@ -1,0 +1,20 @@
+name: d2c_mp_sales_fcst
+channels:
+  - defaults
+dependencies:
+  - python=3.9.16
+  - pypandoc
+  - sphinx
+  - streamlit
+  - scikit-learn
+  - hierarchicalforecast
+  - pytorch-cuda=11.7
+  - pytorch
+  - torchvision
+  - torchaudio
+  - neuralprophet
+  - autopep8
+  - pytest
+  - build
+  - conda-build
+prefix: /home/rhanderh/miniconda3/envs/d2c_mp_sales_fcst
