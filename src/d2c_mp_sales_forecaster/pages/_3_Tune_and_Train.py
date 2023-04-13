@@ -14,7 +14,7 @@ from sklearn.metrics import mean_absolute_percentage_error
 st.set_page_config(page_title="D2C, Dropship, Marketplace Forecasting")
 
 @st.cache_resource(show_spinner=False)
-def fit_complete(params: dict, df: pd.DataFrame, events_df: pd.DataFrame = None) -> NeuralProphet:
+def fit_complete(params: dict, df: pd.DataFrame, events_df: pd.DataFrame = None, fit_spinner_text = "Fitting the model for product") -> NeuralProphet:
     """
     Fit a NeuralProphet model to the complete dataset using the selected params or the best parameters obtained from cross-validation.
     
@@ -149,107 +149,35 @@ normalize_list = ['soft', 'minmax', 'soft1', 'standardize', 'off']
 
 st.header("3. Select, tune, and train the forecasting model.")
 
-if st.session_state['forecast_df'].empty:  
-    st.write("Please first load sales data and select a product to forecast to be able to setup and train a forecasting model.")
-else:
+if 'forecast_df' in st.session_state:
+    if st.session_state['forecast_df'].empty:  
+        st.write("Please first load sales data and select a product to forecast to be able to setup and train a forecasting model.")
+    else:
 
-    tab_auto, tab_select = st.tabs(["Automatic Hyperparameter Tuning", "Manual Hyperparameter Selection"])
+        tab_auto, tab_select = st.tabs(["Automatic Hyperparameter Tuning", "Manual Hyperparameter Selection"])
 
-    #Re-used variables across tabs
-    fit_spinner_text = "Fitting the model for product " + st.session_state['forecast_product'] + " with selected hyperparameters..."
+        #Re-used variables across tabs
+        fit_spinner_text = "Fitting the model for product " + st.session_state['forecast_product'] + " with selected hyperparameters..."
 
-    with tab_select:
+        with tab_select:
 
-        st.subheader("Select hyperparamters to tune a forecasting model for the selected product: ", st.session_state['forecast_product'])
+            st.subheader("Select hyperparamters to tune a forecasting model for the selected product: ", st.session_state['forecast_product'])
 
-        with st.form("param_grid_form"):
-            # Add a title to the form
-            st.write("Select options for param_grid")
-            
-            # Define the options for each parameter
-            seasonality_mode_options = st.selectbox('Select seasonality_mode', ['additive', 'multiplicative'])
-            loss_func_options = st.selectbox('Select loss_func', ['MSE', 'MAE'])
-            n_changepoints = 10
-            n_changepoints_options = st.slider('Select n_changepoints', min_value=1, max_value=20, value=n_changepoints)
-            changepoints_range = 10.0
-            changepoints_range_options = st.slider('Select changepoints_range', min_value=0.01, max_value=20.0, value=changepoints_range)
-            normalize_options = st.selectbox('Select normalization method', normalize_list)
-            n_lags_options = st.slider('Select n_lags', min_value=7, max_value=90, value=30)
-            n_forecasts_options = st.slider('Select n_forecasts', min_value=7, max_value=90, value=30)
-            num_hidden_layers_options = st.selectbox('Select num_hidden_layers',[0,1,2])
-            
-            # Add a submit button to the form
-            submitted = st.form_submit_button("Submit")
-            
-            # If the user submitted the form, print the selected options
-            if submitted:
-                # Create a dictionary to store the selected options
-                st.session_state['selected_options'] = {
-                    'seasonality_mode':seasonality_mode_options,
-                    'loss_func':loss_func_options,
-                    'n_changepoints':n_changepoints_options,
-                    'changepoints_range':changepoints_range_options,
-                    'normalize':normalize_options,
-                    'num_hidden_layers':num_hidden_layers_options,
-                    'n_lags':n_lags_options,
-                    'n_forecasts':n_forecasts_options
-                }
-
-                #Also store iterable version of params dict for common cross-validation function use.
-                selections_to_lists = lambda x: {k: [v] for k, v in x.items()}
-                st.session_state['iter_selections'] = selections_to_lists(st.session_state['selected_options'])
-
-            st.write("Selected options:")
-            st.write(st.session_state['selected_options'])
-
-
-        if st.session_state['selected_options']:
-
-            with st.expander("Cross-Validation"):   
-                if st.button("Cross-Validate"):
-                    with st.spinner("Performing cross-validation... (Please do not refresh or close this tab while running to complete this task.)"):
-                        st.session_state['metrics_test'], st.session_state['selected_options'] = cross_val_tune(
-                            params=st.session_state['iter_selections'], 
-                            df=st.session_state['forecast_df'], 
-                            forecast_product=st.session_state['forecast_product'],
-                            events_df=is_events(),
-                            horizon = int(st.session_state['selected_options']['n_forecasts'])) 
-                    st.success("Cross-validation complete!", icon="✅")
-                else:
-                    st.write("Push \"Cross-Validate\" to perform 5-fold backtesting cross-validation with your selected hyperparameters.")
-
-
-            with st.expander("Fit Model to Complete Dataset"):
-                st.write("Current Identified Best Parameters: ")
-                st.write(st.session_state['selected_options'])
-                if st.button("Fit Model", key='fit_select'):
-                        st.session_state["m"] = fit_complete(params=st.session_state['selected_options'], 
-                                         df=st.session_state['forecast_df'],
-                                         events_df=is_events())
-                else:
-                    st.write("Fit the model with the full data-set for the selected product.  This is required for moving to forecast prediction.")
-
-
-
-        with tab_auto:
-            
-            st.subheader("Select options and ranges for an automated grid-search to find the best hyperparameters: ", st.session_state['forecast_product'])
-
-            with st.form("hyper_grid_form"):
+            with st.form("param_grid_form"):
                 # Add a title to the form
-                st.write("Select options for hyperparameter search.")
+                st.write("Select options for param_grid")
                 
                 # Define the options for each parameter
-                seasonality_mode_options = st.multiselect('Select seasonality_mode', ['additive', 'multiplicative'], default='additive')
-                loss_func_options = st.multiselect('Select loss_func', ['MSE', 'MAE'], default='MSE')
-                n_cp_min, n_cp_max = st.slider('Select n_changepoints (min=1/max=20)', min_value=1, max_value=20, value=(5,10))
-                n_cp_steps = st.number_input('Select step-size for n_changepoints (min=1/max=10)', min_value=1, max_value=10, value=5)
-                cp_range_min, cp_range_max = st.slider('Select changepoints_range (min=0.01/max=20.0)', min_value=0.01, max_value=20.0, value=(1.0, 10.0))
-                cp_range_steps = st.number_input('Select step-size for n_changepoints (min=0.01/max=10.0)', min_value=0.01, max_value=10.0, value=9.0)
-                normalize_options = st.multiselect('Select normalization method', normalize_list, default='soft')
+                seasonality_mode_options = st.selectbox('Select seasonality_mode', ['additive', 'multiplicative'])
+                loss_func_options = st.selectbox('Select loss_func', ['MSE', 'MAE'])
+                n_changepoints = 10
+                n_changepoints_options = st.slider('Select n_changepoints', min_value=1, max_value=20, value=n_changepoints)
+                changepoints_range = 10.0
+                changepoints_range_options = st.slider('Select changepoints_range', min_value=0.01, max_value=20.0, value=changepoints_range)
+                normalize_options = st.selectbox('Select normalization method', normalize_list)
                 n_lags_options = st.slider('Select n_lags', min_value=7, max_value=90, value=30)
                 n_forecasts_options = st.slider('Select n_forecasts', min_value=7, max_value=90, value=30)
-                num_hidden_layers_options = st.multiselect('Select num_hidden_layers',[0,1,2], default=0)
+                num_hidden_layers_options = st.selectbox('Select num_hidden_layers',[0,1,2])
                 
                 # Add a submit button to the form
                 submitted = st.form_submit_button("Submit")
@@ -257,44 +185,119 @@ else:
                 # If the user submitted the form, print the selected options
                 if submitted:
                     # Create a dictionary to store the selected options
-                    st.session_state['hyperparam_options'] = {
+                    st.session_state['selected_options'] = {
                         'seasonality_mode':seasonality_mode_options,
                         'loss_func':loss_func_options,
-                        'n_changepoints':np.arange(n_cp_min, n_cp_max+1, n_cp_steps).tolist(),
-                        'changepoints_range':np.arange(cp_range_min, cp_range_max+0.01, cp_range_steps).tolist(),
-                        'normalize': normalize_options,
+                        'n_changepoints':n_changepoints_options,
+                        'changepoints_range':changepoints_range_options,
+                        'normalize':normalize_options,
                         'num_hidden_layers':num_hidden_layers_options,
-                        'n_lags':[n_lags_options],
-                        'n_forecasts':[n_forecasts_options]
-                        
+                        'n_lags':n_lags_options,
+                        'n_forecasts':n_forecasts_options
                     }
 
+                    #Also store iterable version of params dict for common cross-validation function use.
+                    selections_to_lists = lambda x: {k: [v] for k, v in x.items()}
+                    st.session_state['iter_selections'] = selections_to_lists(st.session_state['selected_options'])
+
                 st.write("Selected options:")
-                st.write(st.session_state['hyperparam_options'])
+                st.write(st.session_state['selected_options'])
 
 
-            if st.session_state['hyperparam_options']:
-                with st.expander("Hyperparameter Search"):   
-                    if st.button("Grid Search"):
-                        with st.spinner("Performing grid search for best hyperparameters... (Please do not refresh or close this tab while running to complete this task.)"):
-                            st.session_state['metrics_test'], st.session_state['best_params'] = cross_val_tune(
-                                params=st.session_state['hyperparam_options'], 
-                                df=st.session_state['forecast_df'],
+            if st.session_state['selected_options']:
+
+                with st.expander("Cross-Validation"):   
+                    if st.button("Cross-Validate"):
+                        with st.spinner("Performing cross-validation... (Please do not refresh or close this tab while running to complete this task.)"):
+                            st.session_state['metrics_test'], st.session_state['selected_options'] = cross_val_tune(
+                                params=st.session_state['iter_selections'], 
+                                df=st.session_state['forecast_df'], 
                                 forecast_product=st.session_state['forecast_product'],
                                 events_df=is_events(),
-                                horizon = int(st.session_state['hyperparam_options']['n_forecasts'][0]))  
+                                horizon = int(st.session_state['selected_options']['n_forecasts'])) 
                         st.success("Cross-validation complete!", icon="✅")
                     else:
-                        st.write("Push \"Cross-Validate\" to Grid Search for best hyperparameters using 5-fold backtesting cross-validation.")
+                        st.write("Push \"Cross-Validate\" to perform 5-fold backtesting cross-validation with your selected hyperparameters.")
 
-            if st.session_state['best_params']:
+
                 with st.expander("Fit Model to Complete Dataset"):
                     st.write("Current Identified Best Parameters: ")
-                    st.write(st.session_state['best_params'])
-                    if st.button("Fit Model", key='fit_auto'):
-                        st.session_state["m"] = fit_complete(params=st.session_state['best_params'], 
-                                                             df=st.session_state['forecast_df'],
-                                                             events_df=is_events()) 
+                    st.write(st.session_state['selected_options'])
+                    if st.button("Fit Model", key='fit_select'):
+                            st.session_state["m"] = fit_complete(params=st.session_state['selected_options'], 
+                                            df=st.session_state['forecast_df'],
+                                            events_df=is_events(),
+                                            fit_spinner_text=fit_spinner_text)
                     else:
-                        st.write("Fit the model with the full data-set and best hyperparameters from grid search for the selected product.  \n", 
-                                 "This is required for moving to forecast prediction.")
+                        st.write("Fit the model with the full data-set for the selected product.  This is required for moving to forecast prediction.")
+
+
+
+            with tab_auto:
+                
+                st.subheader("Select options and ranges for an automated grid-search to find the best hyperparameters: ", st.session_state['forecast_product'])
+
+                with st.form("hyper_grid_form"):
+                    # Add a title to the form
+                    st.write("Select options for hyperparameter search.")
+                    
+                    # Define the options for each parameter
+                    seasonality_mode_options = st.multiselect('Select seasonality_mode', ['additive', 'multiplicative'], default='additive')
+                    loss_func_options = st.multiselect('Select loss_func', ['MSE', 'MAE'], default='MSE')
+                    n_cp_min, n_cp_max = st.slider('Select n_changepoints (min=1/max=20)', min_value=1, max_value=20, value=(5,10))
+                    n_cp_steps = st.number_input('Select step-size for n_changepoints (min=1/max=10)', min_value=1, max_value=10, value=5)
+                    cp_range_min, cp_range_max = st.slider('Select changepoints_range (min=0.01/max=20.0)', min_value=0.01, max_value=20.0, value=(1.0, 10.0))
+                    cp_range_steps = st.number_input('Select step-size for n_changepoints (min=0.01/max=10.0)', min_value=0.01, max_value=10.0, value=9.0)
+                    normalize_options = st.multiselect('Select normalization method', normalize_list, default='soft')
+                    n_lags_options = st.slider('Select n_lags', min_value=7, max_value=90, value=30)
+                    n_forecasts_options = st.slider('Select n_forecasts', min_value=7, max_value=90, value=30)
+                    num_hidden_layers_options = st.multiselect('Select num_hidden_layers',[0,1,2], default=0)
+                    
+                    # Add a submit button to the form
+                    submitted = st.form_submit_button("Submit")
+                    
+                    # If the user submitted the form, print the selected options
+                    if submitted:
+                        # Create a dictionary to store the selected options
+                        st.session_state['hyperparam_options'] = {
+                            'seasonality_mode':seasonality_mode_options,
+                            'loss_func':loss_func_options,
+                            'n_changepoints':np.arange(n_cp_min, n_cp_max+1, n_cp_steps).tolist(),
+                            'changepoints_range':np.arange(cp_range_min, cp_range_max+0.01, cp_range_steps).tolist(),
+                            'normalize': normalize_options,
+                            'num_hidden_layers':num_hidden_layers_options,
+                            'n_lags':[n_lags_options],
+                            'n_forecasts':[n_forecasts_options]
+                            
+                        }
+
+                    st.write("Selected options:")
+                    st.write(st.session_state['hyperparam_options'])
+
+
+                if st.session_state['hyperparam_options']:
+                    with st.expander("Hyperparameter Search"):   
+                        if st.button("Grid Search"):
+                            with st.spinner("Performing grid search for best hyperparameters... (Please do not refresh or close this tab while running to complete this task.)"):
+                                st.session_state['metrics_test'], st.session_state['best_params'] = cross_val_tune(
+                                    params=st.session_state['hyperparam_options'], 
+                                    df=st.session_state['forecast_df'],
+                                    forecast_product=st.session_state['forecast_product'],
+                                    events_df=is_events(),
+                                    horizon = int(st.session_state['hyperparam_options']['n_forecasts'][0]))  
+                            st.success("Cross-validation complete!", icon="✅")
+                        else:
+                            st.write("Push \"Cross-Validate\" to Grid Search for best hyperparameters using 5-fold backtesting cross-validation.")
+
+                if st.session_state['best_params']:
+                    with st.expander("Fit Model to Complete Dataset"):
+                        st.write("Current Identified Best Parameters: ")
+                        st.write(st.session_state['best_params'])
+                        if st.button("Fit Model", key='fit_auto'):
+                            st.session_state["m"] = fit_complete(params=st.session_state['best_params'], 
+                                                                df=st.session_state['forecast_df'],
+                                                                events_df=is_events(),
+                                                                fit_spinner_text=fit_spinner_text) 
+                        else:
+                            st.write("Fit the model with the full data-set and best hyperparameters from grid search for the selected product.  \n", 
+                                    "This is required for moving to forecast prediction.")

@@ -30,7 +30,7 @@ def convert_cols_to_int(df):
     for col in df.columns:
         if col.startswith('y') or col.startswith('residual') or col.startswith('step'):
             df[col].fillna(0,inplace=True)
-            df[col] = df[col].astype(int)
+            df[col] = df[col].round(0).astype(int)
     return df
 
 @st.cache_data
@@ -146,47 +146,48 @@ if 'fit_flag' not in st.session_state:
 #Section for prediction and visualization
 st.header("4. Predict")
 
-if st.session_state['fit_flag'] == False:
-    st.write("Please first load your data and select or train a model in the \"Tune and Train\" page to proceed with forecast prediction.")
-else:
-    st.session_state['horizon'] = st.number_input('Please enter the desired forecast horizon.', min_value=1, max_value=len(st.session_state['forecast_df']), value=30)
+if 'fit_flag' in st.session_state:
+    if st.session_state['fit_flag'] == False:
+        st.write("Please first load your data and select or train a model in the \"Tune and Train\" page to proceed with forecast prediction.")
+    else:
+        st.session_state['horizon'] = st.number_input('Please enter the desired forecast horizon.', min_value=1, max_value=len(st.session_state['forecast_df']), value=30)
 
-    predict_check = st.checkbox("Predict with model.", help="Use fitted NeuralProphet model to predict chosen forecast horizon.")
+        predict_check = st.checkbox("Predict with model.", help="Use fitted NeuralProphet model to predict chosen forecast horizon.")
 
-    if predict_check:
-        st.session_state['forecast']= predict(st.session_state['m'], 
-                                              st.session_state['horizon'] , 
-                                              st.session_state['forecast_df'], 
-                                              is_events())
-        
-        with st.expander("View and Download Forecast"):
-            st.subheader("NeuralProphet Forecast Dataframe")
-            st.write("Please note that all forecast results (yhat) and residuals are rounded to nearest integer for representing whole quantities of product.")
-            st.dataframe(data=st.session_state['forecast'])
-            st.download_button(label="Download Forecast CSV", 
-                               data=convert_df(st.session_state['forecast']),
-                               file_name='forecast_df_'+st.session_state['forecast_product']+'.csv',
-                               mime='text/csv'
-                               )
+        if predict_check:
+            st.session_state['forecast']= predict(st.session_state['m'], 
+                                                st.session_state['horizon'] , 
+                                                st.session_state['forecast_df'], 
+                                                is_events())
             
-        with st.expander("Visualize Results"):
-            plt.style.use('/home/rhanderh/py_proj/d2c_mp_sales_forecast_streamlit/app/config/d2c_forecast_app_style.mplstyle')
-            st.subheader("Forecasted values for " + st.session_state['forecast_product'])
-            fig, ax = plt.subplots()
-            for label in ax.get_xticklabels(which='major'):
-                label.set(rotation=30, horizontalalignment='right')
-            fig = st.session_state['m'].plot_latest_forecast(st.session_state['forecast'],
-                                            df_name=st.session_state['forecast_df'],
-                                            ax=ax,
-                                            xlabel="Date",
-                                            ylabel="Quantity"
-                                            )
-            st.pyplot(fig)
+            with st.expander("View and Download Forecast"):
+                st.subheader("NeuralProphet Forecast Dataframe")
+                st.write("Please note that all forecast results (yhat) and residuals are rounded to nearest integer for representing whole quantities of product.")
+                st.dataframe(data=st.session_state['forecast'])
+                st.download_button(label="Download Forecast CSV", 
+                                data=convert_df(st.session_state['forecast']),
+                                file_name='forecast_df_'+st.session_state['forecast_product']+'.csv',
+                                mime='text/csv'
+                                )
+                
+            with st.expander("Visualize Results"):
+                plt.style.use('/home/rhanderh/py_proj/d2c_mp_sales_forecast_streamlit/app/config/d2c_forecast_app_style.mplstyle')
+                st.subheader("Forecasted values for " + st.session_state['forecast_product'])
+                fig, ax = plt.subplots()
+                for label in ax.get_xticklabels(which='major'):
+                    label.set(rotation=30, horizontalalignment='right')
+                fig = st.session_state['m'].plot_latest_forecast(st.session_state['forecast'],
+                                                df_name=st.session_state['forecast_df'],
+                                                ax=ax,
+                                                xlabel="Date",
+                                                ylabel="Quantity"
+                                                )
+                st.pyplot(fig)
 
-            st.subheader("Forecast components for " + st.session_state['forecast_product'])
-            fig2 = st.session_state['m'].plot_components(fcst=st.session_state['forecast'], plotting_backend='matplotlib')
-            st.pyplot(fig2)
+                st.subheader("Forecast components for " + st.session_state['forecast_product'])
+                fig2 = st.session_state['m'].plot_components(fcst=st.session_state['forecast'], plotting_backend='matplotlib')
+                st.pyplot(fig2)
 
-            st.subheader("Forecast parameters for " + st.session_state['forecast_product'])
-            fig3 = st.session_state['m'].plot_parameters(plotting_backend='matplotlib')
-            st.pyplot(fig3)
+                st.subheader("Forecast parameters for " + st.session_state['forecast_product'])
+                fig3 = st.session_state['m'].plot_parameters(plotting_backend='matplotlib')
+                st.pyplot(fig3)

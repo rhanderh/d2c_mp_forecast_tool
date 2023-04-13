@@ -24,9 +24,11 @@ sales_data = pd.read_csv("./select_product/sales_data.csv",
 sales_data['y'] = sales_data['y'].str.replace(',','')
 sales_data['y'] = sales_data['y'].astype('int64')
 
+
 #sample encoded master data
 master_data_enc = pd.read_csv("./select_product/master_data_enc.csv", index_col=0)
 master_data_enc.index = master_data_enc.index.map(str)
+
 
 #sample lag data
 lag_regressors = pd.read_csv("./select_product/lag_data.csv", 
@@ -45,7 +47,6 @@ for col in lag_regressors.columns:
             lag_regressors[col] = lag_regressors[col].str.replace(',', '')
         lag_regressors[col] = lag_regressors[col].astype('float64')
 lag_data = merge_regressors(sales_data, lag_regressors)
-
 
 
 def test_get_len_history():
