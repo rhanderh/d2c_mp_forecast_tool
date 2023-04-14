@@ -105,51 +105,53 @@ def convert_df(df):
 if 'forecast' not in st.session_state:
     st.session_state['forecast'] = pd.DataFrame
 
+
 #Section for distribution by size
 st.header("5. Apply optional size level distribution to the forecast.")
 
-if st.session_state['forecast'].empty:
-    st.write("Please use the preceding pages to upload data, train a model, and form a product-level prediction before proceeding to size distribution.")
-else:
-    method = st.selectbox("Choose method of calculating size curve from historical data:", ['average_proportions','proportion_averages'],index=0)
-    size_dist_check = st.checkbox(
-        "Distribute your forecast by size?", help="Distribute forecast to a size-curve using top-down average historical proportions."
-    )
-    if size_dist_check:
+if 'forecast' in st.session_state and 'forecast_product' in st.session_state:
+    if st.session_state['forecast'].empty:
+        st.write("Please use the preceding pages to upload data, train a model, and form a product-level prediction before proceeding to size distribution.")
+    else:
+        method = st.selectbox("Choose method of calculating size curve from historical data:", ['average_proportions','proportion_averages'],index=0)
+        size_dist_check = st.checkbox(
+            "Distribute your forecast by size?", help="Distribute forecast to a size-curve using top-down average historical proportions."
+        )
+        if size_dist_check:
 
-        #Execute the reconciliation
-        Y_df, S_df, tags = prep_data_topdown(st.session_state['forecast_product'], st.session_state['forecast_df_product'], st.session_state['all_sales_size_data'])
-        fcst = convert_forecast_for_reconciler(st.session_state['forecast'], st.session_state['horizon'])
-        Y_hat_df = add_size_fcst_frame(fcst, S_df)
+            #Execute the reconciliation
+            Y_df, S_df, tags = prep_data_topdown(st.session_state['forecast_product'], st.session_state['forecast_df_product'], st.session_state['all_sales_size_data'])
+            fcst = convert_forecast_for_reconciler(st.session_state['forecast'], st.session_state['horizon'])
+            Y_hat_df = add_size_fcst_frame(fcst, S_df)
 
-        # Reconcile the base predictions
-        reconcilers = [
-            TopDown(method)
-        ]
+            # Reconcile the base predictions
+            reconcilers = [
+                TopDown(method)
+            ]
 
-        hrec = HierarchicalReconciliation(reconcilers = reconcilers)
-        Y_hat_rec = hrec.reconcile(Y_hat_df=Y_hat_df, S=S_df, tags=tags, Y_df=Y_df)
-        Y_hat_rec.loc[:,'fcst_qty'] = Y_hat_rec['yhat/TopDown_method-'+method].round() # convert forecast to int for qty sold
-        Y_hat_rec.reset_index(inplace=True)
-        Y_hat_sizes = Y_hat_rec[Y_hat_rec['unique_id'] != st.session_state['forecast_product']].iloc[:,[0,1,3,4]]
+            hrec = HierarchicalReconciliation(reconcilers = reconcilers)
+            Y_hat_rec = hrec.reconcile(Y_hat_df=Y_hat_df, S=S_df, tags=tags, Y_df=Y_df)
+            Y_hat_rec.loc[:,'fcst_qty'] = Y_hat_rec['yhat/TopDown_method-'+method].round() # convert forecast to int for qty sold
+            Y_hat_rec.reset_index(inplace=True)
+            Y_hat_sizes = Y_hat_rec[Y_hat_rec['unique_id'] != st.session_state['forecast_product']].iloc[:,[0,1,3,4]]
 
-        
-        st.write(Y_hat_sizes)
-        st.download_button(label="Download Forecast CSV", 
-                    data=convert_df(Y_hat_sizes),
-                    file_name='forecast_bysize_df_'+st.session_state['forecast_product']+'.csv',
-                    mime='text/csv'
-                    )
+            
+            st.write(Y_hat_sizes)
+            st.download_button(label="Download Forecast CSV", 
+                        data=convert_df(Y_hat_sizes),
+                        file_name='forecast_bysize_df_'+st.session_state['forecast_product']+'.csv',
+                        mime='text/csv'
+                        )
 
-        with st.expander("Size Distribution Visualizations"):
-            #Check chart 1
-            size_grp = Y_hat_sizes.loc[:,('ds','unique_id','fcst_qty')].groupby('unique_id').sum().sort_values(by='fcst_qty')
-            st.subheader("Forecast Quantity by Size")
-            st.pyplot(size_grp.plot(kind='barh').figure)
-            #Check chart 2
-            Y_df_comp = Y_df.reset_index()
-            Y_df_comp = Y_df_comp[Y_df_comp['unique_id'] != st.session_state['forecast_product']]
-            Y_df_comp.rename(columns = {"y":"qty"}, inplace = True)
-            st.subheader("Training Set Quantity Distribution")
-            st.pyplot(Y_df_comp.loc[:,('ds','unique_id','qty')].groupby('unique_id').sum().sort_values(by='qty').plot(kind='barh').figure)
+            with st.expander("Size Distribution Visualizations"):
+                #Check chart 1
+                size_grp = Y_hat_sizes.loc[:,('ds','unique_id','fcst_qty')].groupby('unique_id').sum().sort_values(by='fcst_qty')
+                st.subheader("Forecast Quantity by Size")
+                st.pyplot(size_grp.plot(kind='barh').figure)
+                #Check chart 2
+                Y_df_comp = Y_df.reset_index()
+                Y_df_comp = Y_df_comp[Y_df_comp['unique_id'] != st.session_state['forecast_product']]
+                Y_df_comp.rename(columns = {"y":"qty"}, inplace = True)
+                st.subheader("Training Set Quantity Distribution")
+                st.pyplot(Y_df_comp.loc[:,('ds','unique_id','qty')].groupby('unique_id').sum().sort_values(by='qty').plot(kind='barh').figure)
 

@@ -32,7 +32,7 @@ def sample_params():
         'num_hidden_layers': 0,
         'n_lags': 7,
         'n_forecasts': 7,
-        'impute_missing':True
+        'drop_missing':True
     }
 
 if 'forecast_df' not in st.session_state:
