@@ -171,7 +171,6 @@ if 'fit_flag' in st.session_state:
                                 )
                 
             with st.expander("Visualize Results"):
-                plt.style.use('/home/rhanderh/py_proj/d2c_mp_sales_forecast_streamlit/app/config/d2c_forecast_app_style.mplstyle')
                 st.subheader("Forecasted values for " + st.session_state['forecast_product'])
                 fig, ax = plt.subplots()
                 for label in ax.get_xticklabels(which='major'):
