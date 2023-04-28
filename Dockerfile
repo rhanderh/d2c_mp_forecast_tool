@@ -10,9 +10,7 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-#RUN git clone https://github.com/rhanderh/d2c_mp_forecast_tool.git .
-
-COPY . .
+RUN git clone https://github.com/rhanderh/d2c_mp_forecast_tool.git .
 
 # Create the environment from environment.yml and make sure conda is in the PATH
 ADD environment.yml /tmp/environment.yml
