@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+
+  #d2c_mp_sales_fcst:
+   # build: .
+    #depends_on:
+     # - postgres
+    #ports:
+    #  - "8501:8501"
+
+  postgres:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: your_db_name
+    env_file:
+      - ./.streamlit/postgres_secrets.env
+    expose:
+      - "5433" # Publishes 5433 to other containers but NOT to host machine
+    ports:
+      - "5433:5433"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./backups:/home/backups
+    command: -p 5433
+  
+volumes:
+  postgres-data:

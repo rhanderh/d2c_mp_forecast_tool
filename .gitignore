@@ -55,6 +55,11 @@ cover/
 *.mo
 *.pot
 
+#Streamlit stuff:
+.streamlit
+.streamlit/secrets.toml
+.streamlit/postgres_secrets.env
+
 # Django stuff:
 *.log
 local_settings.py
@@ -151,6 +156,9 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+#git stuff
+gitmsg.txt
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
