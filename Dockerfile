@@ -12,11 +12,9 @@ RUN apt-get update && apt-get install -y \
 
 RUN git clone https://github.com/rhanderh/d2c_mp_forecast_tool.git .
 
-# Create the environment from environment.yml and make sure conda is in the PATH
+# Create the environment from environment.yml 
 ADD environment.yml /tmp/environment.yml
 RUN conda env create -f /tmp/environment.yml
-
-# Pull the environment name out of the environment.yml
 RUN echo "source activate d2c_mp_sales_fcst" > ~/.bashrc
 ENV PATH /opt/conda/envs/d2c_mp_sales_fcst/bin:$PATH
 
