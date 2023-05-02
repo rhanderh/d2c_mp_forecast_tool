@@ -61,20 +61,20 @@ To run this application using Docker Compose:
 
 1. Copy compose.yaml file from this github repository to desired deployment directory.
 
----
+```
 cp compose.yaml your_directory
 cd your_directory
----
+```
 
 2. Create a hidden folder ".streamlit" inside of this directory, where you will create your own deployment secrets configurations for the database.
 
----
+```
 mkdir .streamlit
----
+```
 
 3. Make two secrets files inside the .streamlit directory: secrets.toml and postgres_secrets.env.  You can copy paste the content listed below into each, replacing the configurations with your own.  Please ensure that your password is consistent across both files.  The user, POSTGRES_USER and the database should all share the same name consistently across files too!
 
----
+```
 # .streamlit/secrets.toml
 
 [postgresql]
@@ -83,19 +83,19 @@ port = xxxx
 database = xxxx
 user = xxxx
 password = xxx
----
+```
 
----
+```
 # .streamlit/postgres_secrets.env
 POSTGRES_PASSWORD=xxxx
 POSTGRES_USER=xxx
----
+```
 
 4. After configuring your application-database secrets, ensure you are in the same directory as compose.yaml and exeucte docker compose up.  If you are running locally, once the application and database have been pulled form docker hub and started, you should be able to access the application from a web browser on localhost:8501.
 
----
+```
 docker compose up
----
+```
 
 ## Application Pages
 
