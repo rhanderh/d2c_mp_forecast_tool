@@ -3,22 +3,20 @@ version: '3'
 services:
 
   d2c_mp_sales_fcst:
-    build: .
+    image: rhanderh/d2c_mp_sales_forecast_streamlit:000
     depends_on:
       - postgres
     ports:
       - "8501:8501"
     secrets:
       - source: streamlit_secrets
-      - target: ./.streamlit/secrets.toml
+        target: /app/.streamlit/secrets.toml
 
   postgres:
     image: postgres
     restart: always
-    environment:
-      POSTGRES_DB: your_db_name
     env_file:
-      - /run/secrets/postgres_secrets
+      - ./.streamlit/postgres_secrets.env
     expose:
       - "5433" # Publishes 5433 to other containers but NOT to host machine
     ports:
@@ -29,13 +27,13 @@ services:
     command: -p 5433
     secrets:
       - source: postgres_secrets
-      - target: ./.streamlit/postgres_secrets.env
+        target: /app/.streamlit/secrets.toml
 
 secrets:
   postgres_secrets:
-    file: $HOME/postgres_secrets.env
+    file: ./.streamlit/postgres_secrets.env
   streamlit_secrets:
-    file: $HOME/secrets/secrets.toml
+    file: ./.streamlit/secrets.toml
 
 volumes:
   postgres-data:
