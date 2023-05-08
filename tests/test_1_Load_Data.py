@@ -1,15 +1,16 @@
 import pytest
 import pandas as pd
+import streamlit as st
 from io import StringIO
-from d2c_mp_sales_forecaster.pages._1_Load_Data import (
-    upload_sales_size_data,
-    upload_master_data,
-    upload_events_data,
-    upload_lag_data,
-    upload_future_data,
-)
+from unittest.mock import MagicMock
+from d2c_mp_sales_forecaster.pages._1_Load_Data import LoadData
 
 class TestClassLoadData:
+
+    @pytest.fixture(autouse=True)
+    def set_up(self):
+        with MagicMock() as st.session_state:
+            yield
     
     @pytest.fixture
     def sample_sales_size_data(self):
@@ -31,29 +32,24 @@ class TestClassLoadData:
         data = "ds,lag1\n2022-01-01,10\n2022-01-02,12"
         return StringIO(data)
 
-    @pytest.fixture
-    def sample_future_data(self):
-        data = "ds,future1\n2022-01-03,15\n2022-01-04,18"
-        return StringIO(data)
-
     def test_upload_sales_size_data(self, sample_sales_size_data):
-        all_sales_data, all_sales_size_data = upload_sales_size_data(sample_sales_size_data)
+        ld = LoadData()
+        all_sales_data, all_sales_size_data = ld.upload_sales_size_data_func(sample_sales_size_data)
         assert isinstance(all_sales_data, pd.DataFrame)
         assert isinstance(all_sales_size_data, pd.DataFrame)
 
     def test_upload_master_data(self, sample_master_data):
-        master_data, master_data_enc = upload_master_data(sample_master_data)
+        ld = LoadData()
+        master_data, master_data_enc = ld.upload_master_data_func(sample_master_data)
         assert isinstance(master_data, pd.DataFrame)
         assert isinstance(master_data_enc, pd.DataFrame)
 
     def test_upload_events_data(self, sample_events_data):
-        events_df = upload_events_data(sample_events_data)
+        ld = LoadData()
+        events_df = ld.upload_events_data_func(sample_events_data)
         assert isinstance(events_df, pd.DataFrame)
 
     def test_upload_lag_data(self, sample_lag_data):
-        lag_data = upload_lag_data(sample_lag_data)
+        ld = LoadData()
+        lag_data = ld.upload_lag_data_func(sample_lag_data)
         assert isinstance(lag_data, pd.DataFrame)
-
-    def test_upload_future_data(self, sample_future_data):
-        future_data = upload_future_data(sample_future_data)
-        assert isinstance(future_data, pd.DataFrame)
