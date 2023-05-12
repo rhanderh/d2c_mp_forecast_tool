@@ -19,6 +19,8 @@ class ProductSelection:
             st.session_state['matched'] = None
         if 'forecast_product' not in st.session_state:
             st.session_state['forecast_product'] = None
+        if 'all_sales_regressors' not in st.session_state:
+            st.session_state['all_sales_regressors'] = pd.DataFrame
         # layout page
         st.title("D2C, Dropship, Marketplace Forecasting")
         st.header("2. Select product for forecasting.")

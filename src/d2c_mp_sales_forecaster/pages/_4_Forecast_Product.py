@@ -215,9 +215,9 @@ def save_fcst_db(forecast_df: pd.DataFrame, forecast_product: str, fcst_session_
                 st.success("Forecast saved!")
             else:
                 st.error("Failed to create forecast session.")
+            pg_manager.close_pool()
 
-    # Close the database connection pool
-    pg_manager.close_pool()
+
 
 #initiliaze session_state variables
 if 'forecast' not in st.session_state:
