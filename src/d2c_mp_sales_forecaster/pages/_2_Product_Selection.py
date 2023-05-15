@@ -21,10 +21,12 @@ class ProductSelection:
             st.session_state['forecast_product'] = None
         if 'all_sales_regressors' not in st.session_state:
             st.session_state['all_sales_regressors'] = pd.DataFrame
+        if 'master_data' not in st.session_state:
+            st.session_state['master_data'] = pd.DataFrame
         # layout page
         st.title("D2C, Dropship, Marketplace Forecasting")
         st.header("2. Select product for forecasting.")
-        if 'master_data' not in st.session_state:
+        if st.session_state['master_data'].empty:
             st.write(
                 "Please go to Load Data and upload a product attribute file to be able to choose a product for forecasting.")
         else:
