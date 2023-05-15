@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "d2c_mp_sales_forecaster"
-version = "0.0.2"
+version = "0.0.003"
 authors = [
   { name="Ryan Handerhan", email="rhanderh@alumni.cmu.edu" },
 ]

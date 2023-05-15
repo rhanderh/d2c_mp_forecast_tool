@@ -2,16 +2,16 @@ version: '3'
 
 services:
 
-  #d2c_mp_sales_fcst:
-   # image: rhanderh/d2c_mp_sales_forecast_streamlit:000
-    #depends_on:
-     # - postgres
-    #ports:
-    #  - "8501:8501"
-    #secrets:
-    #  - source: streamlit_secrets
-    #    target: /app/.streamlit/secrets.toml
-
+  d2c_mp_sales_fcst:
+    image: rhanderh/d2c_mp_sales_forecast_streamlit:000
+    depends_on:
+      - postgres
+    ports:
+      - "8501:8501"
+    secrets:
+      - source: streamlit_secrets
+        target: /app/.streamlit/secrets.toml
+        
   postgres:
     image: postgres
     restart: always
