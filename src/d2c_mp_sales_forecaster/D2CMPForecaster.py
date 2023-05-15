@@ -23,8 +23,3 @@ st.set_page_config(page_title="D2C, Dropship, Marketplace Time-Series Forecastin
 
 #Title
 st.title("D2C, Dropship, Marketplace Sales Time-Series Forecasting")
-
-
-
-
-

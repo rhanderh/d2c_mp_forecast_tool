@@ -33,7 +33,7 @@ class TuneTrain:
         if 'fit_flag' not in st.session_state:
             st.session_state['fit_flag'] = False
         if 'events_df' not in st.session_state:
-            st.session_state['events_df'] = None
+            st.session_state['events_df'] = pd.DataFrame()
         normalize_list = ['soft', 'minmax', 'soft1', 'standardize', 'off']
         # Layout page
         st.set_page_config(page_title="D2C, Dropship, Marketplace Forecasting")
@@ -74,9 +74,11 @@ class TuneTrain:
                         st.write(st.session_state['selected_options'])
                         if st.button("Fit Model", key='fit_select'):
                             with st.spinner(fit_spinner_text):
-                                st.session_state["m"] = self.fit_complete(params=st.session_state['selected_options'],
+                                st.session_state["m"], fit_metrics = self.fit_complete(params=st.session_state['selected_options'],
                                                                           df=st.session_state['forecast_df'],
                                                                           events_df=st.session_state['events_df'])
+                                st.write("Metrics from model fit:", fit_metrics)
+                                st.session_state['fit_flag'] = True
                             st.success("Model fit complete!", icon="✅")
                         else:
                             st.write(
@@ -108,7 +110,7 @@ class TuneTrain:
                             st.write(st.session_state['best_params'])
                             if st.button("Fit Model", key='fit_auto'):
                                 with st.spinner(fit_spinner_text):
-                                    st.session_state["m"] = self.fit_complete(params=st.session_state['best_params'],
+                                    st.session_state["m"], fit_metrics = self.fit_complete(params=st.session_state['best_params'],
                                                                               df=st.session_state['forecast_df'],
                                                                               events_df=st.session_state['events_df'])
                                 st.success("Model fit complete!", icon="✅")
@@ -117,7 +119,7 @@ class TuneTrain:
                                          "This is required for moving to forecast prediction.")
 
     @st.cache_resource(show_spinner=False)
-    def fit_complete(_self, params: dict, df: pd.DataFrame, events_df: pd.DataFrame = None) -> NeuralProphet:
+    def fit_complete(_self, params: dict, df: pd.DataFrame, events_df: pd.DataFrame = None) -> tuple:
         """
         Fit a NeuralProphet model to the complete dataset using the selected params or the best parameters obtained from cross-validation.
 
@@ -134,16 +136,14 @@ class TuneTrain:
         for col in df.columns:
             if col != 'y' and col != 'ds':
                 m = m.add_lagged_regressor(names=col)
-        if events_df is not None:
+        if not events_df.empty:
             # Need to update this so it is flexible to different holiday names
             m.add_events(['Cyber Week'], mode='additive')
             data_ev = m.create_df_with_events(df, events_df)
             fit_metrics = m.fit(df=data_ev, freq="D")
         else:
             fit_metrics = m.fit(df=df, freq="D")
-        st.write("Metrics from model fit:", fit_metrics)
-        st.session_state['fit_flag'] = True
-        return m
+        return m, fit_metrics
 
     @st.cache_resource(show_spinner=False)
     def cross_val_tune(_self, params: dict, df: pd.DataFrame, forecast_product: str, events_df: pd.DataFrame = None, horizon: int = 30) -> tuple:
@@ -184,7 +184,7 @@ class TuneTrain:
                 for col in df.columns:
                     if col != 'y' and col != 'ds':
                         m = m.add_lagged_regressor(names=col)
-                if events_df is not None:
+                if not events_df.empty:
                     # Need to update this so that it is flexible to different holidays
                     m.add_events(['Cyber Week'], mode='additive')
                     df_train_ev = m.create_df_with_events(df_train, events_df)
